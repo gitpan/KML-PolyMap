@@ -19,12 +19,25 @@ Geo::KML::PolyMap - Generate KML/KMZ-format choropleth (shaded polygonal) maps v
 
 	use Geo::KML::PolyMap qw(generate_kml_file generate_kmz_file);
 
-	# Clusters data in $entities into $nbins bins; renders using colors from $startcolor to $endcolor;
+	# Clusters "Total Population" data for "Foobar City" in $entities into 5 bins;
+	# renders using colors from $startcolor to $endcolor;
 	# generates a legend; renders output to file handle passed in $kmz_filehandle
-	generate_kmz_file($entities,$placename,$data_description,$nbins,$kmz_filehandle,$startcolor,$endcolor);
-  
+	generate_kmz_file(entities => $entities,
+                          placename => "Foobar City",
+                          data_desc => "Total Population",
+                          nbins => 5,
+                          kmzfh => $filehandle_for_kmz_output,
+                          startcolor => "FFFF0000",
+                          endcolor => "FF00FF00");
+
 	# As above, but without a legend
-	generate_kml_file($entities,$placename,$data_description,$nbins,$startcolor,$endcolor,$fh);
+        generate_kml_file(entities => $entities,
+                          placename => "Foobar City",
+                          data_desc => "Total Population",
+                          nbins => 5,
+                          kmlfh => $filehandle_for_kml_output,
+                          startcolor => "FFFF0000",
+                          endcolor => "FF00FF00");
 
 =head1 REQUIRES
 
@@ -48,10 +61,6 @@ Geo::KML::PolyMap generates KML or KMZ-formatted maps for Google Earth. Given a 
 region (for example, city blocks and population counts on each block), Geo::KML::PolyMap generates a choropleth map showing the data value
 for each region as a shaded polygon. The polygons are divided into a number of bins, with the color of each bin unique. Optionally,
 Geo::KML::PolyMap will generate a legend along with the map file to illustrate the data ranges represented by each color.
-
-=head1 AUTHOR
-
-Imran Haque, ihaque@cs.stanford.edu
 
 =head1 CONFIGURATION
 
@@ -146,7 +155,8 @@ BEGIN {
 #	v1.2	ihaque	???	added k-means binning
 #	v1.3	ihaque	???	added rendering to disk
 #	v 1.31	ihaque	3/1/07	moved from EXPORT to EXPORT_OK
-	$VERSION = 1.31;
+#	v 1.32	ihaque	3/2/07	fixed documentation bug with SYNOPSIS
+	$VERSION = 1.32;
 	@ISA = qw(Exporter);
 	@EXPORT = ();
 	%EXPORT_TAGS = ();
@@ -973,6 +983,10 @@ can really speed up KMZ generation, especially for really big maps. To do this, 
 in Zip.pm to:
 
 	$ChunkSize=131072;
+
+=head1 AUTHOR
+
+Imran Haque, ihaque@cs.stanford.edu
 
 =head1 COPYRIGHT AND LICENSE
 
