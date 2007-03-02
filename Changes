@@ -1,0 +1,8 @@
+v1.0	ihaque	5/30/06	initial version
+v1.1	ihaque	5/31/06	added equipartition binning
+v1.2	ihaque	???	added k-means binning
+v1.3	ihaque	???	added rendering to disk
+v 1.31	ihaque	3/1/07	moved functions from EXPORT to EXPORT_OK
+			added named-argument wrappers to generate_kml_file and generate_kmz_file
+			added perldoc
+
