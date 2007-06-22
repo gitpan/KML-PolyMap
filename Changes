@@ -6,3 +6,4 @@ v 1.31	ihaque	3/1/07	moved functions from EXPORT to EXPORT_OK
 			added named-argument wrappers to generate_kml_file and generate_kmz_file
 			added perldoc
 v 1.32	ihaque	3/2/07	fixed documentation bug with SYNOPSIS
+			changed default font path to that for FreeSans

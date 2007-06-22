@@ -144,7 +144,7 @@ use GD;
 use Archive::Zip qw( :ERROR_CODES :CONSTANTS );
 use File::Temp qw( tempfile );
 
-my $FONT_PATH = "/home/ihaque/gcensus/test/gd/arialbd.ttf";
+my $FONT_PATH = "/usr/share/fonts/truetype/freefont/FreeSans.ttf";
 
 
 BEGIN {
@@ -156,7 +156,9 @@ BEGIN {
 #	v1.3	ihaque	???	added rendering to disk
 #	v 1.31	ihaque	3/1/07	moved from EXPORT to EXPORT_OK
 #	v 1.32	ihaque	3/2/07	fixed documentation bug with SYNOPSIS
-	$VERSION = 1.32;
+#	v 1.33	ihaque	6/22/07	added rudimentary support for altitude-mapping data
+#				changed default font path to that for FreeSans
+	$VERSION = 1.33;
 	@ISA = qw(Exporter);
 	@EXPORT = ();
 	%EXPORT_TAGS = ();
@@ -218,13 +220,14 @@ sub generate_colors($;$$) {
 	return \@colors;
 }
 
-# generate_kml_polygon(entity& entity,OPT int altitude)
+# generate_kml_polygon(entity& entity)
 # Returns reference to a array containing the lines of the
 # KML version of entity->polygon
-sub generate_kml_polygon($;$) {
-	my ($entity,$altitude) = @_;
+sub generate_kml_polygon($) {
+	my ($entity) = @_;
 	carp "Undefined entity" if not defined $entity;
 	# Preprocess altitude for concatenations
+	my $altitude = $entity->{altitude};
 	if (not defined $altitude) {
 		$altitude=",0";
 	} else {
@@ -254,6 +257,9 @@ sub generate_kml_polygon($;$) {
 	# Terribly inefficient - could replace with a here document
 	my @kml_poly;
 	push(@kml_poly,"<Polygon>");
+	push(@kml_poly,"<extrude>1</extrude>");
+	#push(@kml_poly,"<tessellate>1</tessellate>");
+	push(@kml_poly,"<altitudeMode>relativeToGround</altitudeMode>");
 	push(@kml_poly,"<outerBoundaryIs>");
 	push(@kml_poly,"<LinearRing>");
 	push(@kml_poly,"<coordinates>");
@@ -579,6 +585,9 @@ sub _generate_kml_file($$$$$;$$) {
 	# Refactored to expose bins and colors for legend generation in KMZ
 	my $bins_colors = _generate_bins_colors($entities,$nbins,
 						$startcolor,$endcolor);
+
+	# Map data parameter in entities to altitude
+	altitude_map($entities,"data");
 	
 	return _generate_kml($entities,$placename,$datadesc,$nbins,
 			     $bins_colors->[0],$bins_colors->[1],$fh);
@@ -637,6 +646,36 @@ sub _generate_kml($$$$$$$;$) {
 	push(@kml_file,"</Document>");
 	push(@kml_file,"</kml>");
 	print $fh join('',@kml_file);
+	return;
+}
+
+# altitude_map(entity[]& entities,string fieldname)
+# MODIFIES entities - adds altitude attribute based on data value in fieldname for each entity
+# returns none
+
+sub altitude_map($$) {
+	my ($ents,$fname) = @_;
+	my $minval = $ents->[0]->{$fname};	
+	my $maxval = $ents->[0]->{$fname};	
+	foreach my $ent (@$ents) {
+		if ($ent->{$fname} < $minval) {
+			$minval = $ent->{$fname};
+		} elsif ($ent->{$fname} > $maxval) {
+			$maxval = $ent->{$fname};
+		}
+	}
+	# Use a 3km altitude scale
+	my $alt_scale = 3000;
+	# Place bottom of range 50m above ground to avoid artifacting
+	my $min_height = 50;
+
+	my $multiplier = $alt_scale/($maxval-$minval);
+	my $offset = $minval - $min_height;
+
+	foreach my $ent (@$ents) {
+		$ent->{altitude} = ($ent->{$fname}-$offset) * $multiplier;
+	}
+
 	return;
 }
 
@@ -837,6 +876,9 @@ sub _generate_kmz_file($$$$$;$$) {
 	my $bins_colors = _generate_bins_colors($entities,$nbins,
 						$startcolor,$endcolor);
 	
+	# Map data parameter in entities to altitude
+	altitude_map($entities,"data");
+
 	# OK to render the legend to RAM - it's small
 	my $legend = generate_legend($bins_colors->[0],$bins_colors->[1],$FONT_PATH);
 
