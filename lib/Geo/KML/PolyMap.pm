@@ -158,7 +158,9 @@ BEGIN {
 #	v 1.32	ihaque	3/2/07	fixed documentation bug with SYNOPSIS
 #	v 1.33	ihaque	6/22/07	added rudimentary support for altitude-mapping data
 #				changed default font path to that for FreeSans
-	$VERSION = 1.33;
+#	v 1.34	ihaque	9/19/07	fixed bug relating to spaces in the polygon string passed to kml_polygon
+#
+	$VERSION = 1.34;
 	@ISA = qw(Exporter);
 	@EXPORT = ();
 	%EXPORT_TAGS = ();
@@ -242,8 +244,9 @@ sub generate_kml_polygon($) {
 		warn "entity->number = ".$entity->{number}."\n";
 		die;
 	}
+	# Clear spaces from the polystring
+	$polystring =~ s/ //g; 
 	# Clear the double parens that postgres gives us
-	#$polystring =~ s/\(\(/\t\t(/;
 	$polystring =~ s/\(\(/(/;
 	$polystring =~ s/\)\)$/)/;
 	# Nuke open parens
